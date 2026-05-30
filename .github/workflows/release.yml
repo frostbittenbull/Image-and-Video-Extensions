@@ -1,0 +1,99 @@
+name: Auto-Update Extensions
+on:
+  schedule:
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  update-and-release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      actions: write
+    steps:
+      - name: Checkout current commit
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install requests cloudscraper
+
+      - name: Fetch and Check Updates
+        id: fetch
+        run: python .github/scripts/fetch_extensions.py
+
+      - name: Commit changes
+        id: commit
+        if: steps.fetch.outputs.changed == 'true'
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add -A "Image and Video Extensions/Extensions/*" README.md
+          git commit -m "Auto-update extensions: $(date +'%Y-%m-%d')"
+
+      - name: Squash all commits into one
+        if: steps.fetch.outputs.changed == 'true'
+        run: |
+          BRANCH=$(git rev-parse --abbrev-ref HEAD)
+          COMMIT_MSG=$(git log -1 --pretty=%B)
+          
+          git checkout --orphan temp-branch
+          git add -A
+          git commit -m "$COMMIT_MSG"
+          
+          git branch -D "$BRANCH"
+          git branch -m "$BRANCH"
+          git push --force origin "$BRANCH"
+
+      - name: Get current date for tag and title
+        id: date
+        if: steps.fetch.outputs.changed == 'true'
+        run: echo "date=$(date +'%Y-%m-%d')" >> "$GITHUB_OUTPUT"
+
+      - name: Delete old releases
+        if: steps.fetch.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          RELEASES=$(gh release list --json tagName --jq '.[].tagName' 2>/dev/null || true)
+          for TAG in $RELEASES; do
+            gh release delete "$TAG" --yes --cleanup-tag 2>/dev/null || true
+          done
+
+      - name: Archive "Image and Video Extensions" folder
+        if: steps.fetch.outputs.changed == 'true'
+        run: |
+          zip -9 -r "Image and Video Extensions.zip" "Image and Video Extensions/"
+
+      - name: Create GitHub Release
+        if: steps.fetch.outputs.changed == 'true'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.date.outputs.date }}
+          name: ${{ steps.date.outputs.date }}
+          body: ${{ steps.fetch.outputs.notes }}
+          files: Image and Video Extensions.zip
+
+      - name: Cleanup Actions History
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          CURRENT_RUN_ID=${{ github.run_id }}
+
+          RUNS=$(gh run list --workflow "${{ github.workflow }}" --status completed --limit 100 --json databaseId --jq ".[] | select(.databaseId != $CURRENT_RUN_ID) | .databaseId")
+          
+          if [ -n "$RUNS" ]; then
+            for RUN_ID in $RUNS; do
+              gh run delete "$RUN_ID"
+            done
+          fi
