@@ -1,0 +1,128 @@
+name: Auto-Update Extensions
+on:
+  schedule:
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  update-and-release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      actions: write
+    steps:
+      - name: Checkout current commit
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install requests cloudscraper
+
+      - name: Fetch and Check Updates
+        id: fetch
+        run: python .github/scripts/fetch_extensions.py
+
+      - name: Detect actual changes
+        id: changes
+        run: |
+          if [ -n "$(git status --porcelain -- 'Image and Video Extensions/Extensions' README.md)" ]; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Commit changes
+        id: commit
+        if: steps.changes.outputs.changed == 'true'
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add -A "Image and Video Extensions/Extensions/*" README.md
+          git commit -m "Auto-update extensions: $(date +'%Y-%m-%d')"
+
+      - name: Squash all commits into one
+        if: steps.changes.outputs.changed == 'true'
+        run: |
+          BRANCH=$(git rev-parse --abbrev-ref HEAD)
+          COMMIT_MSG=$(git log -1 --pretty=%B)
+
+          PINNED_RAW=$(find "Image and Video Extensions/Extensions" -name "RAW_Image_Extension_2.4.24.0.*" | head -1)
+          if [ -n "$PINNED_RAW" ]; then
+            cp "$PINNED_RAW" /tmp/RAW_Image_Extension_2.4.24.0_pinned
+          fi
+
+          PINNED_WEBMEDIA=$(find "Image and Video Extensions/Extensions" -name "WEB_Media_Extensions_1.2.29.0.*" | head -1)
+          if [ -n "$PINNED_WEBMEDIA" ]; then
+            cp "$PINNED_WEBMEDIA" /tmp/WEB_Media_Extensions_1.2.29.0_pinned
+          fi
+
+          git checkout --orphan temp-branch
+          git add -A
+          git commit -m "$COMMIT_MSG"
+
+          git branch -D "$BRANCH"
+          git branch -m "$BRANCH"
+          git push --force origin "$BRANCH"
+
+      - name: Get current date for tag and title
+        id: date
+        if: steps.changes.outputs.changed == 'true'
+        run: echo "date=$(date +'%Y-%m-%d')" >> "$GITHUB_OUTPUT"
+
+      - name: Delete old releases
+        if: steps.changes.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          RELEASES=$(gh release list --json tagName --jq '.[].tagName' 2>/dev/null || true)
+          for TAG in $RELEASES; do
+            gh release delete "$TAG" --yes --cleanup-tag 2>/dev/null || true
+          done
+
+      - name: Archive "Image and Video Extensions" folder
+        if: steps.changes.outputs.changed == 'true'
+        run: |
+          PINNED_RAW_DEST="Image and Video Extensions/Extensions/RAW_Image_Extension_2.4.24.0.AppxBundle"
+          if [ ! -f "$PINNED_RAW_DEST" ] && [ -f /tmp/RAW_Image_Extension_2.4.24.0_pinned ]; then
+            cp /tmp/RAW_Image_Extension_2.4.24.0_pinned "$PINNED_RAW_DEST"
+          fi
+
+          PINNED_WEBMEDIA_DEST="Image and Video Extensions/Extensions/WEB_Media_Extensions_1.2.29.0.AppxBundle"
+          if [ ! -f "$PINNED_WEBMEDIA_DEST" ] && [ -f /tmp/WEB_Media_Extensions_1.2.29.0_pinned ]; then
+            cp /tmp/WEB_Media_Extensions_1.2.29.0_pinned "$PINNED_WEBMEDIA_DEST"
+          fi
+
+          zip -9 -r "Image and Video Extensions.zip" "Image and Video Extensions/"
+
+      - name: Create GitHub Release
+        if: steps.changes.outputs.changed == 'true'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.date.outputs.date }}
+          name: ${{ steps.date.outputs.date }}
+          body: ${{ steps.fetch.outputs.notes }}
+          files: Image and Video Extensions.zip
+
+      - name: Cleanup Actions History
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          CURRENT_RUN_ID=${{ github.run_id }}
+
+          RUNS=$(gh run list --workflow "${{ github.workflow }}" --status completed --limit 100 --json databaseId --jq ".[] | select(.databaseId != $CURRENT_RUN_ID) | .databaseId")
+
+          if [ -n "$RUNS" ]; then
+            for RUN_ID in $RUNS; do
+              gh run delete "$RUN_ID"
+            done
+          fi
