@@ -76,7 +76,7 @@ jobs:
       - name: Get current date for tag and title
         id: date
         if: steps.changes.outputs.changed == 'true'
-        run: echo "date=$(date +'%Y-%m-%d')" >> "$GITHUB_OUTPUT"
+        run: echo "date=$(date +'%d.%m.%Y')" >> "$GITHUB_OUTPUT"
 
       - name: Delete old releases
         if: steps.changes.outputs.changed == 'true'
@@ -101,7 +101,7 @@ jobs:
             cp /tmp/WEB_Media_Extensions_1.2.29.0_pinned "$PINNED_WEBMEDIA_DEST"
           fi
 
-          zip -9 -r "Image and Video Extensions.zip" "Image and Video Extensions/"
+          zip -9 -r "Image and Video Extensions (${{ steps.date.outputs.date }}).zip" "Image and Video Extensions/"
 
       - name: Create GitHub Release
         if: steps.changes.outputs.changed == 'true'
@@ -110,7 +110,7 @@ jobs:
           tag_name: ${{ steps.date.outputs.date }}
           name: ${{ steps.date.outputs.date }}
           body: ${{ steps.fetch.outputs.notes }}
-          files: Image and Video Extensions.zip
+          files: Image and Video Extensions (${{ steps.date.outputs.date }}).zip
 
       - name: Cleanup Actions History
         if: always()
