@@ -22,8 +22,8 @@ os.makedirs(EXT_DIR, exist_ok=True)
 
 PINNED_PACKAGES = {
     "RAW_Image_Extension": {
-        "pinned_version": "2.4.24.0",
-        "min_update_version": (2, 4, 24, 1),
+        "pinned_version": "2.4.36.0",
+        "min_update_version": (2, 4, 36, 1),
     },
     "WEB_Media_Extensions": {
         "pinned_version": "1.2.29.0",
