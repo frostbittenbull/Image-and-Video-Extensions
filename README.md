@@ -57,7 +57,7 @@ Image and Video Extensions/
     ├── JPEG_XL_Image_Extension_1.2.50.0.AppxBundle
     ├── MPEG2_Video_Extension_1.2.32.0.AppxBundle
     ├── Microsoft_VCLibs_140.00_14.0.33519.0.Appx
-    ├── RAW_Image_Extension_2.4.24.0.AppxBundle
+    ├── RAW_Image_Extension_2.4.36.0.AppxBundle
     ├── RAW_Image_Extension_2.5.35.0.AppxBundle
     ├── VP9_Video_Extensions_1.2.20.0.AppxBundle
     ├── WEBP_Image_Extension_1.2.31.0.AppxBundle
