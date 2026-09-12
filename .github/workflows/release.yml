@@ -55,9 +55,9 @@ jobs:
           BRANCH=$(git rev-parse --abbrev-ref HEAD)
           COMMIT_MSG=$(git log -1 --pretty=%B)
 
-          PINNED_RAW=$(find "Image and Video Extensions/Extensions" -name "RAW_Image_Extension_2.4.24.0.*" | head -1)
+          PINNED_RAW=$(find "Image and Video Extensions/Extensions" -name "RAW_Image_Extension_2.4.36.0.*" | head -1)
           if [ -n "$PINNED_RAW" ]; then
-            cp "$PINNED_RAW" /tmp/RAW_Image_Extension_2.4.24.0_pinned
+            cp "$PINNED_RAW" /tmp/RAW_Image_Extension_2.4.36.0_pinned
           fi
 
           PINNED_WEBMEDIA=$(find "Image and Video Extensions/Extensions" -name "WEB_Media_Extensions_1.2.29.0.*" | head -1)
@@ -91,9 +91,9 @@ jobs:
       - name: Archive "Image and Video Extensions" folder
         if: steps.changes.outputs.changed == 'true'
         run: |
-          PINNED_RAW_DEST="Image and Video Extensions/Extensions/RAW_Image_Extension_2.4.24.0.AppxBundle"
-          if [ ! -f "$PINNED_RAW_DEST" ] && [ -f /tmp/RAW_Image_Extension_2.4.24.0_pinned ]; then
-            cp /tmp/RAW_Image_Extension_2.4.24.0_pinned "$PINNED_RAW_DEST"
+          PINNED_RAW_DEST="Image and Video Extensions/Extensions/RAW_Image_Extension_2.4.36.0.AppxBundle"
+          if [ ! -f "$PINNED_RAW_DEST" ] && [ -f /tmp/RAW_Image_Extension_2.4.36.0_pinned ]; then
+            cp /tmp/RAW_Image_Extension_2.4.36.0_pinned "$PINNED_RAW_DEST"
           fi
 
           PINNED_WEBMEDIA_DEST="Image and Video Extensions/Extensions/WEB_Media_Extensions_1.2.29.0.AppxBundle"
