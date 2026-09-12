@@ -59,7 +59,7 @@ if errorlevel 3 (
         "Get-ChildItem 'Extensions\HEIF_Image_Extension_*.AppxBundle'                  | Select-Object -First 1 | ForEach-Object { Add-AppxPackage -Path $_.FullName };" ^
         "Get-ChildItem 'Extensions\HEVC_Video_Extension_*.AppxBundle'                  | Select-Object -First 1 | ForEach-Object { Add-AppxPackage -Path $_.FullName };" ^
         "Get-ChildItem 'Extensions\MPEG2_Video_Extension_*.AppxBundle'                 | Select-Object -First 1 | ForEach-Object { Add-AppxPackage -Path $_.FullName };" ^
-        "Add-AppxPackage -Path 'Extensions\RAW_Image_Extension_2.4.24.0.AppxBundle';" ^
+        "Add-AppxPackage -Path 'Extensions\RAW_Image_Extension_2.4.36.0.AppxBundle';" ^
         "Get-ChildItem 'Extensions\VP9_Video_Extensions_*.AppxBundle'                  | Select-Object -First 1 | ForEach-Object { Add-AppxPackage -Path $_.FullName };" ^
         "Add-AppxPackage -Path 'Extensions\WEB_Media_Extensions_1.2.29.0.AppxBundle';" ^
         "Get-ChildItem 'Extensions\WEBP_Image_Extension_*.AppxBundle'                  | Select-Object -First 1 | ForEach-Object { Add-AppxPackage -Path $_.FullName }" 2>nul
@@ -88,7 +88,7 @@ if errorlevel 2 (
         "Get-ChildItem 'Extensions\Microsoft_VCLibs_140.00*.Appx'                      | Select-Object -First 1 | ForEach-Object { Add-AppxPackage -Path $_.FullName };" ^
         "Get-ChildItem 'Extensions\AV1_Video_Extension_*.AppxBundle'                   | Select-Object -First 1 | ForEach-Object { Add-AppxPackage -Path $_.FullName };" ^
         "Get-ChildItem 'Extensions\HEIF_Image_Extension_*.AppxBundle'                  | Select-Object -First 1 | ForEach-Object { Add-AppxPackage -Path $_.FullName };" ^
-        "Add-AppxPackage -Path 'Extensions\RAW_Image_Extension_2.4.24.0.AppxBundle';" ^
+        "Add-AppxPackage -Path 'Extensions\RAW_Image_Extension_2.4.36.0.AppxBundle';" ^
         "Get-ChildItem 'Extensions\WEBP_Image_Extension_*.AppxBundle'                  | Select-Object -First 1 | ForEach-Object { Add-AppxPackage -Path $_.FullName }" 2>nul
     if "%win_ver%"=="11" (
         powershell -NoProfile -Command ^
